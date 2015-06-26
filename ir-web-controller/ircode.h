@@ -1,53 +1,151 @@
 #ifndef IRCODE
 #define IRCODE
 
-/*!
- * \file ircode.h
- * \brief Define and Send IR code
- * \author cyprieng
- * \version 0.1
- */
 #include <Arduino.h>
 #include <IRremote.h>
- 
+
 /**
- * \struct IR_Code
- * @brief Structure for a ircode
- *
- * code_type:
- *   NEC = 1,
- *   SONY = 2,
- *   RC5 = 3,
- *   RC6 = 4,
- *   DISH = 5,
- *   SHARP = 6,
- *   PANASONIC = 7,
- *   JVC = 8,
- *   SANYO = 9,
- *   MITSUBISHI = 10,
- *   SAMSUNG = 11,
- *   LG = 12,
- *   WHYNTER = 13
+ * Class recording an IR code
+ * @author cyprieng
  */
-typedef struct {
-   char* remote_name; /*!< name of the remote */
-   char* function_name; /*!< name of the action */
-   int code_type; /*!< type of the IR code */
-   int code_bits; /*!< length of the code */
-   unsigned long code_value; /*!< value of the code */
-} IR_Code;
+class IRCode{
+  public:
+    /**
+     * Constructor without any initialization
+     */
+    IRCode();
 
-extern int num_codes; /*!< Number of IR codes */
-extern IR_Code ir_codes[]; /*!< Array of IR codes */
+    /**
+     * Constructor whith init
+     */
+    IRCode(String remote_name, String function_name, int code_type, int code_len, unsigned long code_value);
 
-/*!
- *  \fn void sendIRCode(IR_Code code)
- *  \brief Send IR Code
- *
- *  Send an IR Code thought the LED in pin 3
- *
- *  \param code : code to send
- */
-void sendIRCode(IR_Code code);
+    /**
+     *
+     * @return unique remote number
+     */
+    int getRemoteNumber() const;
+
+    /**
+     *
+     * @return name of the remote
+     */
+    String getRemoteName() const;
+
+    /**
+     *
+     * @return name of the ir code function
+     */
+    String getFunctionName() const;
+
+    /**
+     *
+     * @return type of the code
+     * @see IRremote.h
+     */
+    int getCodeType() const;
+
+    /**
+     *
+     * @return length of the code
+     */
+    int getCodeLen() const;
+
+    /**
+     *
+     * @return raw codes of an ircode with unknow type
+     */
+    unsigned int* getRawCodes() const;
+
+    /**
+     *
+     * @return value of a code with a known code type
+     */
+    unsigned long getCodeValue() const;
+
+    /**
+     *
+     * @param remote name of the remote
+     */
+    void setRemoteName(String remote);
+
+    /**
+     *
+     * @param function name of the ir code function
+     */
+    void setFunctionName(String function);
+
+    /**
+     *
+     * @param type type of the code
+     * @see IRremote.h
+     */
+    void setCodeType(int type);
+
+    /**
+     *
+     * @param len length of the code
+     */
+    void setCodeLen(int len);
+
+    /**
+     *
+     * @param raw raw value of the code (for unknow code type)
+     */
+    void setRawCodes(unsigned int raw[RAWBUF]);
+
+    /**
+     *
+     * @param value value of the code
+     */
+    void setCodeValue(unsigned long value);
+
+  private:
+    /**
+     * Count the number of remote
+     */
+    static int m_remote_counter;
+
+    /**
+     * Name of the last remote addded
+     */
+    static String m_last_remote;
+
+    /**
+     * Number of the remote
+     */
+    int m_remote_number;
+
+    /**
+     * Name of the remote
+     */
+    String m_remote_name;
+
+    /**
+     * Name of the ir code function
+     */
+    String m_function_name; /*!< name of the action */
+
+    /**
+     * Type of the code
+     * @see IRremote.h
+     */
+    int m_code_type;
+
+    /**
+     * Length of the code
+     */
+    int m_code_len;
+
+    /**
+     * If code type is unknow, this will contain the raw code
+     */
+    unsigned int m_raw_codes[RAWBUF];
+
+    /**
+     * Value of the code if the type is now unknow
+     */
+    unsigned long m_code_value;
+};
 
 #endif

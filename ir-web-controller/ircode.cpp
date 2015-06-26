@@ -1,75 +1,92 @@
-/**
- * \file ircode.cpp
- * \brief Define and send IR codes
- * \author cyprieng
- * \version 0.1
- * \date 12/06/2015
- */
-#include "ircode.h" 
+#include "IRCode.h"
 
-IRsend irsend; /*!< Load IRsend from IRremote library */
+using namespace std;
 
-// Define the list of IR codes
-int num_codes = 4;
-IR_Code ir_codes[4] = {
-   { "Philipps", "key0", 4, 20, 0x0 },
-   { "Philipps", "key1", 4, 20, 0x1 },
-   { "Philipps", "key2", 4, 20, 0x2 },
-   { "Philipps", "key3", 4, 20, 0x3 },
-};
+// Init remote counter and last remote name
+int IRCode::m_remote_counter = 0;
+String IRCode::m_last_remote = "";
 
-/*!
- *  \fn void sendIRCode(IR_Code code)
- *  \brief Send IR Code
- *
- *  Send an IR Code thought the LED in pin 3
- *
- *  \param code : code to send
- */
-void sendIRCode(IR_Code code) {
-  // Switch by the type of code
-  switch (code.code_type) {
-    case 1:    
-      irsend.sendNEC(code.code_value, code.code_bits);
-      break;
-    case 2:    
-      irsend.sendSony(code.code_value, code.code_bits);
-      break;
-    case 3:    
-      irsend.sendRC5(code.code_value, code.code_bits);
-      break;
-    case 4:    
-      irsend.sendRC6(code.code_value, code.code_bits);
-      break;
-    case 5:    
-      irsend.sendDISH(code.code_value, code.code_bits);
-      break;
-    case 6:    
-      irsend.sendSharp(code.code_value, code.code_bits);
-      break;
-    case 7:    
-      irsend.sendPanasonic(code.code_value, code.code_bits);
-      break;
-    case 8:    
-      irsend.sendJVC(code.code_value, code.code_bits, 0);
-      break;
-    case 9:
-      // Not implemented yet in the library    
-      //irsend.sendSanyo(code.code_value, code.code_bits);
-      break;
-    case 10:    
-      // Not implemented yet in the library
-      //irsend.sendMitsubishi(code.code_value, code.code_bits);
-      break;
-    case 11:    
-      irsend.sendSAMSUNG(code.code_value, code.code_bits);
-      break;
-    case 12:    
-      // Not implemented yet in the library
-      //irsend.sendLG(code.code_value, code.code_bits);
-      break;
-    case 13:    
-      irsend.sendWhynter(code.code_value, code.code_bits);
-      break;
-  } 
+IRCode::IRCode(){
+  // Set default remote and function name
+  m_remote_name = "Default";
+  m_function_name = "";
+
+  if(m_remote_name != m_last_remote){ // New remote
+    // Increase counter
+    m_remote_counter++;
+    m_remote_number = m_remote_counter;
+  }
+  else{
+    m_remote_number = m_remote_counter;
+  }
+
+  m_last_remote = m_remote_name; // Store remote name
+}
+
+IRCode::IRCode(String remote_name, String function_name,
+                int code_type, int code_len, unsigned long code_value) :
+                m_remote_name(remote_name), m_function_name(function_name),
+                m_code_type(code_type), m_code_len(code_len), m_code_value(code_value) {
+  if(remote_name != m_last_remote){ // New remote
+    // Increase counter
+    m_remote_counter++;
+    m_remote_number = m_remote_counter;
+  }
+  else{
+    m_remote_number = m_remote_counter;
+  }
+
+  m_last_remote = remote_name; // Store remote name
+}
+
+int IRCode::getRemoteNumber() const{
+  return m_remote_number;
+}
+
+String IRCode::getRemoteName() const{
+  return m_remote_name;
+}
+
+String IRCode::getFunctionName() const{
+  return m_function_name;
+}
+
+int IRCode::getCodeType() const{
+  return m_code_type;
+}
+
+int IRCode::getCodeLen() const{
+  return m_code_len;
+}
+
+unsigned int* IRCode::getRawCodes() const{
+  return const_cast<unsigned int*>(m_raw_codes);
+}
+
+unsigned long IRCode::getCodeValue() const{
+  return m_code_value;
+}
+
+void IRCode::setRemoteName(String remote){
+  m_remote_name = remote;
+}
+
+void IRCode::setFunctionName(String function){
+  m_function_name = function;
+}
+
+void IRCode::setCodeType(int type){
+  m_code_type = type;
+}
+
+void IRCode::setCodeLen(int len){
+  m_code_len = len;
+}
+
+void IRCode::setRawCodes(unsigned int raw[RAWBUF]){
+  memcpy(m_raw_codes, raw, RAWBUF);
+}
+
+void IRCode::setCodeValue(unsigned long value){
+  m_code_value = value;
 }
