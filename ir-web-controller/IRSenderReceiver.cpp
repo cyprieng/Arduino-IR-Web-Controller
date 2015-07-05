@@ -9,7 +9,8 @@ IRSenderReceiver::IRSenderReceiver(){
 
 void IRSenderReceiver::getIRCode(IRCode *ircode){
   decode_results results;
-
+  m_irrecv.resume(); // Restart ir receiver
+  
   // Wait IR code
   while(!m_irrecv.decode(&results)) {
   }
