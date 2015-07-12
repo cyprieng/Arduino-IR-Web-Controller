@@ -28,8 +28,15 @@ void setup(){
  
 void loop(){
   if(esp8266.available()){ // check if the esp is sending a message
- 
-    if(esp8266.find("+IPD,") && esp8266.find("GET /receiver/")){ // API URL for retrieving an IR code
+    // Get request
+    String req = "";
+    char c;
+    while(esp8266.available() && c != '\r'){
+      c = esp8266.read(); // read the next character.
+      req+=c;
+    }
+
+    if(req.indexOf("+IPD,") > -1 && req.indexOf("GET /receiver/") > -1){ // API URL for retrieving an IR code
       // Get IR code
       Serial.println("Getting IR code...");
       sender.getIRCode(&ircode);
@@ -45,7 +52,7 @@ void loop(){
 
       // Build content
       String Content;
-      Content = "{\"type\":\""+ (String)ircode.getCodeType() +"\", \"value\":\""+ (String)ircode.getCodeValue() +"\"}";
+      Content = "{\"type\":\""+ (String)ircode.getCodeType() +"\", \"value\":\""+ (String)ircode.getCodeValue() +"\", \"length\":\""+ (String)ircode.getCodeLen() +"\"}";
 
       // Set content length
       Header += "Content-Length: ";
@@ -54,10 +61,47 @@ void loop(){
 
       // Send data
       int length = Header.length()+Content.length();
-      sendData("AT+CIPSEND=0,"+(String)length+"\r\n",2000,DEBUG);
-      delay(10);
-      sendData(Header+Content,2000,DEBUG);
-      delay(10);
+      sendData("AT+CIPSEND=0,"+(String)Header.length()+"\r\n",2000,DEBUG);
+      sendData(Header,2000,DEBUG);
+      sendData("AT+CIPSEND=0,"+(String)Content.length()+"\r\n",2000,DEBUG);
+      sendData(Content,2000,DEBUG);
+    }
+    else if(req.indexOf("+IPD,") > -1 && req.indexOf("GET /send/") > -1){
+      Serial.println("Sending...");
+
+      // Get code
+      int index_type = req.indexOf("?type=") + 6;
+      int index_end_type = req.indexOf("&value=");
+      String type = req.substring(index_type, index_end_type);
+
+      int index_value = req.indexOf("&value=") + 7;
+      int index_end_value = req.indexOf("&len=");
+      String value = req.substring(index_value, index_end_value);
+
+      int index_len = req.indexOf("&len=") + 5;
+      int index_end_len = req.indexOf(" HTTP");
+      String len = req.substring(index_len, index_end_len);
+      
+      ircode.setCodeType(atoi(type.c_str()));
+      ircode.setCodeValue(atol(value.c_str()));
+      ircode.setCodeLen(atoi(len.c_str()));
+
+      // Send code
+      sender.sendIRCode(ircode, 0);
+
+      // Build header
+      String Header;
+      Header =  "HTTP/1.1 200 OK\r\n";
+      Header += "Content-Type: application/json\r\n";
+      Header += "Connection: close\r\n";
+      Header += "Content-Length: 0";
+      Header += "\r\n\r\n";
+
+      // Send data
+      sendData("AT+CIPSEND=0,"+(String)Header.length()+"\r\n",2000,DEBUG);
+      sendData(Header,2000,DEBUG);
+      
+      Serial.println("Done");
     }
   }
 }
